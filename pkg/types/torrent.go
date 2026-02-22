@@ -1,10 +1,8 @@
 package types
 
 type TorrentFile struct {
-	InfoHash string
-	Length string
+	Name string
+	InfoHash []byte
+	Length int64
 	Private bool
-
-	TrackerURL string
-	Trackers map[string]struct{}
 }
