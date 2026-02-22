@@ -1,1 +1,42 @@
+kbit-torrent
+============
+
+A minimal BitTorrent CLI client written in Go.
+
 IN DEV STAGE
+
+Requirements
+------------
+
+- Linux
+- Go 1.25.6
+
+Download
+-------------------
+
+1) Manual
+
+git clone https://github.com/your-username/kbit-torrent.git
+cd kbit-torrent
+
+Build
+-----
+
+go build -o ./bin/kbit-torrent ./cmd/kbit-torrent
+
+Run
+---
+
+./bin/kbit-torrent <command> [args]
+
+Available Commands
+------------------
+
+Command    Arguments       Description
+-------    ---------       --------------------------------
+parse      <file path>     Parse and display torrent metadata
+
+Usage Example
+-------------
+
+./bin/kbit-torrent parse ./example.torrent
