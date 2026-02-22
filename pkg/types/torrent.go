@@ -7,5 +7,4 @@ type TorrentFile struct {
 
 	TrackerURL string
 	Trackers map[string]struct{}
-	Peers map[string]struct{}
 }
