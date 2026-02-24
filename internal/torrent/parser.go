@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"io"
+	"strings"
 	"log/slog"
+	"kbit/internal/net"
 	"kbit/internal/logger"
 	"crypto/sha1"
 	"kbit/pkg/types"
@@ -102,6 +104,38 @@ func ParseTorrentFile(file *os.File) (types.TorrentFile, error) {
 	logger.Log.Info("infohash generated",
 		slog.String("infohash", fmt.Sprintf("%x", torrent.InfoHash)),
 	)
+
+	announce, _ := root["announce"].(types.BencodeString)
+	if strings.HasPrefix(string(announce), "https://") || strings.HasPrefix(string(announce), "http://") {
+		torrent.TrackerURL = string(announce)
+		temp := make(types.HashSet[string], 1)
+		temp[torrent.TrackerURL] = struct{}{}
+
+		net.DiscoverPeers(&torrent, &temp)
+	} else {
+		logger.Log.Warn("torrent file main tracker url does not http/https protocol")
+	}
+
+
+
+	announceList, ok := root["announce-list"].(types.BencodeList)
+	if ok {
+		torrent.Trackers = make(types.HashSet[string])
+
+		// WHY TORRENT JUST WHY
+		for _, v1 := range announceList {
+			for _, v2 := range (v1.(types.BencodeList)) {
+				url := string(v2.(types.BencodeString))
+				if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
+					continue
+				}
+
+				torrent.Trackers[url] = struct{}{}
+			}
+		}
+
+		net.DiscoverPeers(&torrent, &torrent.Trackers)
+	}
 
 	return torrent, nil
 }

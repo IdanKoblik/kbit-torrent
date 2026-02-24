@@ -5,7 +5,7 @@ import (
 )
 
 type Command interface {
-	Run(args []string) error
+	Run(arg string) error
 }
 
 func FindCommand(name string) (Command, error) {

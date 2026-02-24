@@ -5,4 +5,8 @@ type TorrentFile struct {
 	InfoHash []byte
 	Length int64
 	Private bool
+
+	TrackerURL string
+	Trackers HashSet[string]
+	Peers HashSet[string]
 }
