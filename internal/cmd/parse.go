@@ -10,12 +10,8 @@ type ParseCommand struct {
 	File string
 }
 
-func (c *ParseCommand) Run(args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("please provide a file")
-	}
-
-	c.File = args[0]
+func (c *ParseCommand) Run(arg string) error {
+	c.File = arg
 	file, err := os.Open(c.File)
 	if err != nil {
 		return fmt.Errorf("File %s does not exists", c.File)
@@ -28,14 +24,17 @@ func (c *ParseCommand) Run(args []string) error {
 		return err
 	}
 
-	fmt.Print("\033[H\033[2J") // move cursor to top-left + clear screen
-
 	fmt.Println("")
 	fmt.Println("===== SUMMARY =====")
 	fmt.Printf("Name: %s\n", torrent.Name)
 	fmt.Printf("Private: %t\n", torrent.Private)
 	fmt.Printf("Info hash: %x\n", string(torrent.InfoHash))
 	fmt.Printf("Length: %d\n", torrent.Length)
+	fmt.Println("")
+	fmt.Printf("Tracker: %s\n", torrent.TrackerURL)
+	for peer := range torrent.Peers {
+		fmt.Println(peer)
+	}
 
 	return nil
 }

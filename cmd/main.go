@@ -14,7 +14,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.Init(slog.LevelInfo)
+	verbose := false
+	if len(os.Args) > 4 {
+		if os.Args[4] == "verbose" {
+			verbose = true
+		}
+	}
+
+	logger.Init(slog.LevelInfo, verbose)
 
 	cmdName := os.Args[1]
 	cmd, err := cmd.FindCommand(cmdName)
@@ -23,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := cmd.Run(os.Args[2:]); err != nil {
+	if err := cmd.Run(os.Args[2]); err != nil {
 		logger.Log.Error("ERROR: ", "", err)
 		os.Exit(1)
 	}
