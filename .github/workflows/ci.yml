@@ -212,21 +212,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate and sanitise version
+        id: ver
+        run: |
+          # Strip leading 'v' if present, then reject anything makepkg forbids
+          RAW="${{ github.event.inputs.version }}"
+          VERSION="${RAW#v}"
+          if echo "$VERSION" | grep -qP '[:/\-\s]'; then
+            echo "::error::pkgver '${VERSION}' contains a colon, slash, hyphen, or whitespace — not allowed by makepkg"
+            exit 1
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Compute source tarball checksum
         id: checksum
         run: |
-          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${{ steps.ver.outputs.version }}"
           URL="https://github.com/IdanKoblik/kbit-torrent/archive/v${VERSION}.tar.gz"
           curl -fsSL "$URL" -o source.tar.gz
           echo "sha256=$(sha256sum source.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
 
       - name: Update PKGBUILD
         run: |
-          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${{ steps.ver.outputs.version }}"
+          SHA256="${{ steps.checksum.outputs.sha256 }}"
           sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
-          sed -i "s/^sha256sums=.*/sha256sums=('${{ steps.checksum.outputs.sha256 }}')/" PKGBUILD
-          echo "Updated PKGBUILD:"
+          sed -i "s/^sha256sums=.*/sha256sums=('${SHA256}')/" PKGBUILD
+          echo "=== PKGBUILD after update ==="
           cat PKGBUILD
+          echo "============================="
 
       - name: Push to AUR
         uses: KSXGitHub/github-actions-deploy-aur@v2.7.2
@@ -236,5 +250,5 @@ jobs:
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: "Update to v${{ github.event.inputs.version }}"
+          commit_message: "Update to v${{ steps.ver.outputs.version }}"
           allow_empty_commits: false
