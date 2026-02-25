@@ -1,0 +1,13 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, devops]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release — must match a CHANGELOG entry (e.g. 1.0.0)"
+        required: true
+        type: string
