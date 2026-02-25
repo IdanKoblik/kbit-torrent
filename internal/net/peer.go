@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// BitTorrent peer wire protocol message IDs.
 const (
 	MsgChoke         uint8 = 0
 	MsgUnchoke       uint8 = 1
@@ -20,30 +19,24 @@ const (
 	MsgPiece         uint8 = 7
 	MsgCancel        uint8 = 8
 
-	// BlockSize is the standard request block size (16 KiB).
 	BlockSize = 16 * 1024
 )
 
-// PeerMsg is a decoded BitTorrent peer wire protocol message.
-// A nil PeerMsg (returned from ReadMsg) represents a keep-alive.
 type PeerMsg struct {
 	ID      uint8
 	Payload []byte
 }
 
-// PeerConn wraps a net.Conn with BitTorrent peer wire protocol helpers.
 type PeerConn struct {
 	conn     net.Conn
 	Addr     string
 	Bitfield []byte
 }
 
-// NewPeerConn wraps an existing connection (after handshake) in a PeerConn.
 func NewPeerConn(conn net.Conn, addr string) *PeerConn {
 	return &PeerConn{conn: conn, Addr: addr}
 }
 
-// SendMsg encodes and sends a message: [4-byte BE length][1-byte id][payload].
 func (p *PeerConn) SendMsg(id uint8, payload []byte) error {
 	length := uint32(1 + len(payload))
 	buf := make([]byte, 4+1+len(payload))
@@ -54,8 +47,6 @@ func (p *PeerConn) SendMsg(id uint8, payload []byte) error {
 	return err
 }
 
-// ReadMsg reads the next message from the peer.
-// Returns nil, nil for keep-alive messages (zero-length prefix).
 func (p *PeerConn) ReadMsg() (*PeerMsg, error) {
 	var lengthBuf [4]byte
 	if _, err := io.ReadFull(p.conn, lengthBuf[:]); err != nil {
@@ -74,17 +65,14 @@ func (p *PeerConn) ReadMsg() (*PeerMsg, error) {
 	return &PeerMsg{ID: msgBuf[0], Payload: msgBuf[1:]}, nil
 }
 
-// SetDeadline sets the connection's read/write deadline.
 func (p *PeerConn) SetDeadline(t time.Time) error {
 	return p.conn.SetDeadline(t)
 }
 
-// Close closes the underlying connection.
 func (p *PeerConn) Close() error {
 	return p.conn.Close()
 }
 
-// HasPiece reports whether the peer's bitfield indicates it has piece i.
 func (p *PeerConn) HasPiece(i int) bool {
 	byteIdx := i / 8
 	bitIdx := 7 - (i % 8)
@@ -94,7 +82,6 @@ func (p *PeerConn) HasPiece(i int) bool {
 	return p.Bitfield[byteIdx]>>uint(bitIdx)&1 == 1
 }
 
-// buildRequestPayload encodes a Request message payload (12 bytes).
 func buildRequestPayload(index, begin, length int) []byte {
 	payload := make([]byte, 12)
 	binary.BigEndian.PutUint32(payload[0:4], uint32(index))
