@@ -273,7 +273,7 @@ jobs:
 
       - name: Push to AUR
         run: |
-          git clone git@gitlab.archlinux.org:idank/kbit-torrent.git /tmp/aur-repo
+          git clone ssh://aur@aur.archlinux.org/kbit-torrent.git /tmp/aur-repo
           cp PKGBUILD .SRCINFO /tmp/aur-repo/
           cd /tmp/aur-repo
           git config user.name  "${{ secrets.AUR_USERNAME }}"
