@@ -1,5 +1,5 @@
 pkgname=kbit-torrent
-pkgver=0.0.0
+pkgver=1.0.0
 pkgrel=1
 pkgdesc="A minimal BitTorrent CLI client written in Go"
 arch=('x86_64')
