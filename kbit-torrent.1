@@ -19,6 +19,19 @@ Parse a
 .I .torrent
 file and print its metadata summary, including name, info hash, length,
 tracker URL, and discovered peers.
+.TP
+.BI handshake " <file>"
+Perform a BitTorrent handshake with a peer.
+Prompts interactively for a peer address in
+.I host:port
+format.
+.TP
+.BI download " <file>"
+Download the torrent described by
+.IR <file> .
+Validates available peers, collects piece availability (bitfields),
+sorts pieces by rarity (rarest-first), and writes the downloaded data
+to disk. Progress is reported to stderr.
 .SH OPTIONS
 .TP
 .B verbose
@@ -31,6 +44,22 @@ Parse a torrent file:
 .RS
 .EX
 kbit\-torrent parse example.torrent
+.EE
+.RE
+.PP
+Perform a handshake with a peer (prompts for host:port):
+.PP
+.RS
+.EX
+kbit\-torrent handshake example.torrent
+.EE
+.RE
+.PP
+Download a torrent:
+.PP
+.RS
+.EX
+kbit\-torrent download example.torrent
 .EE
 .RE
 .SH FILES
