@@ -92,6 +92,28 @@ func ParseTorrentFile(file *os.File) (types.TorrentFile, error) {
 		)
 	}
 
+	if pl, ok := info["piece length"].(types.BencodeInt); ok {
+		torrent.PieceLength = int64(pl)
+	} else {
+		logger.Log.Warn("piece length not found in info dict")
+	}
+
+	if ps, ok := info["pieces"].(types.BencodeString); ok {
+		raw := []byte(ps)
+		if len(raw)%20 != 0 {
+			return torrent, fmt.Errorf("pieces field length %d is not a multiple of 20", len(raw))
+		}
+		n := len(raw) / 20
+		torrent.Pieces = make([][]byte, n)
+		for i := range n {
+			h := make([]byte, 20)
+			copy(h, raw[i*20:(i+1)*20])
+			torrent.Pieces[i] = h
+		}
+	} else {
+		logger.Log.Warn("pieces not found in info dict")
+	}
+
 	infoEncoded, err := Encode(info)
 	if err != nil {
 		return torrent, err
