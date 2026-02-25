@@ -1,9 +1,10 @@
 package torrent
 
 import (
+	"fmt"
+	"sort"
 	"strconv"
 	"unicode"
-	"fmt"
 	"kbit/pkg/types"
 )
 
@@ -155,10 +156,16 @@ func encodeList(list types.BencodeList) (string, error) {
 }
 
 func encodeDict(dict types.BencodeDict) (string, error) {
+	keys := make([]string, 0, len(dict))
+	for key := range dict {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
 	out := "d"
-	for key, value := range dict {
+	for _, key := range keys {
 		out += encodeString(key)
-		enc, err := Encode(value)
+		enc, err := Encode(dict[key])
 		if err != nil {
 			return "", err
 		}

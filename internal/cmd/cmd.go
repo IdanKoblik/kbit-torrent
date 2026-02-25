@@ -12,6 +12,8 @@ func FindCommand(name string) (Command, error) {
 	switch name {
 	case "parse":
 		return &ParseCommand{}, nil
+	case "handshake":
+		return &HandshakeCommand{}, nil
 	default:
 		return nil, fmt.Errorf("unknown command: %s", name)
 	}
