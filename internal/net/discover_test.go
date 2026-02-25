@@ -6,9 +6,17 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"crypto/rand"
 
 	"kbit/pkg/types"
 )
+
+func generatePeerID() string {
+	peerID := make([]byte, 20)
+	copy(peerID[:8], []byte("-GT0001-"))
+	rand.Read(peerID[8:]) //nolint:errcheck // crypto/rand.Read never fails
+	return string(peerID)
+}
 
 func buildPeerResponse(peerBytes []byte) []byte {
 	prefix := fmt.Sprintf("d5:peers%d:", len(peerBytes))

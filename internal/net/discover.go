@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"sync"
 	"log/slog"
-	"crypto/rand"
-	"encoding/hex"
 
 	"kbit/internal/logger"
 	"kbit/pkg/types"
@@ -138,12 +136,6 @@ func bruteForce(torrent *types.TorrentFile, urls *types.HashSet[string]) types.H
 	return peers
 }
 
-func generatePeerID() string {
-	random := make([]byte, 12)
-	rand.Read(random)
-	return "-GT0001-" + hex.EncodeToString(random)[:12]
-}
-
 func buildTrackerURL(torrent *types.TorrentFile, tracker string) (string, error) {
 	base, err := url.Parse(tracker)
 	if err != nil {
@@ -152,7 +144,7 @@ func buildTrackerURL(torrent *types.TorrentFile, tracker string) (string, error)
 
 	params := url.Values{}
 	params.Set("info_hash", string(torrent.InfoHash))
-	params.Set("peer_id", generatePeerID())
+	params.Set("peer_id", string(PeerID))
 	params.Set("port", "6881")
 	params.Set("uploaded", "0")
 	params.Set("downloaded", "0")

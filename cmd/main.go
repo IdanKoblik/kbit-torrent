@@ -3,9 +3,11 @@ package main
 import(
 	"os"
 	"fmt"
+	"log"
 	"log/slog"
 	"kbit/internal/logger"
 	"kbit/internal/cmd"
+	"kbit/internal/net"
 )
 
 func main() {
@@ -22,6 +24,13 @@ func main() {
 	}
 
 	logger.Init(slog.LevelInfo, verbose)
+	id, err := net.GeneratePeerID()
+	if err != nil {
+		log.Fatalf("Error generating peer id: %v\n", err)
+		return
+	}
+
+	net.PeerID = id
 
 	cmdName := os.Args[1]
 	cmd, err := cmd.FindCommand(cmdName)
@@ -31,7 +40,7 @@ func main() {
 	}
 
 	if err := cmd.Run(os.Args[2]); err != nil {
-		logger.Log.Error("ERROR: ", "", err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
