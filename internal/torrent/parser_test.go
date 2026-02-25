@@ -6,9 +6,6 @@ import (
 	"testing"
 )
 
-// writeTempTorrent creates a temporary file with the given bencode content and
-// returns an open *os.File ready for reading. The file is removed when the
-// test ends.
 func writeTempTorrent(t *testing.T, content string) *os.File {
 	t.Helper()
 	tmp, err := os.CreateTemp("", "*.torrent")
@@ -32,9 +29,6 @@ func writeTempTorrent(t *testing.T, content string) *os.File {
 	return f
 }
 
-// TestParseTorrentFile_SingleFile is an integration test: it opens a real
-// fixture torrent whose announce URL is HTTPS, so the parser will attempt
-// live tracker connections. Skip in -short mode to keep unit runs fast.
 func TestParseTorrentFile_SingleFile(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -110,10 +104,7 @@ func TestParseTorrentFile_MissingInfo(t *testing.T) {
 	}
 }
 
-// --- Additional parser tests (no network calls; UDP announce URL) ---
-
 func TestParseTorrentFile_UDPAnnounce(t *testing.T) {
-	// UDP scheme is not http/https — no DiscoverPeers call is made.
 	content := "d8:announce28:udp://tracker.example.com:804:infod6:lengthi1024e4:name8:testfileee"
 	file := writeTempTorrent(t, content)
 
@@ -183,7 +174,6 @@ func TestParseTorrentFile_PrivateTorrent(t *testing.T) {
 }
 
 func TestParseTorrentFile_MissingLengthAndFiles(t *testing.T) {
-	// info dict has name but neither length nor files.
 	content := "d4:infod4:name4:testee"
 	file := writeTempTorrent(t, content)
 
@@ -194,7 +184,6 @@ func TestParseTorrentFile_MissingLengthAndFiles(t *testing.T) {
 }
 
 func TestParseTorrentFile_NoAnnounce(t *testing.T) {
-	// No announce or announce-list → tracker URL stays empty, no network call.
 	content := "d4:infod6:lengthi512e4:name6:simpleee"
 	file := writeTempTorrent(t, content)
 

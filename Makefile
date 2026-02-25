@@ -10,7 +10,6 @@ all: build
 build:
 	$(GO) build -o bin/kbit-torrent ./cmd
 
-# Run the full test suite (includes tests that may make real network calls).
 .PHONY: test
 test:
 	$(GO) test -v ./...

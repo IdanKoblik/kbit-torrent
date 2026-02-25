@@ -157,8 +157,6 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
-// --- Decode edge cases ---
-
 func TestDecodeNegativeInt(t *testing.T) {
 	result, err := Decode("i-42e")
 	if err != nil {
@@ -264,8 +262,6 @@ func TestDecodeInvalidStringFormat(t *testing.T) {
 		t.Error("expected error for string without colon separator")
 	}
 }
-
-// --- Encode edge cases ---
 
 func TestEncodeNegativeInt(t *testing.T) {
 	result, err := Encode(types.BencodeInt(-100))

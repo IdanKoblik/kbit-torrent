@@ -61,7 +61,6 @@ func TestParseCommand_InvalidTorrent(t *testing.T) {
 }
 
 func TestParseCommand_ValidTorrent_UDPAnnounce(t *testing.T) {
-	// UDP announce URL — parser skips network discovery, no I/O side-effects.
 	content := "d8:announce28:udp://tracker.example.com:804:infod6:lengthi1024e4:name8:testfileee"
 
 	f, err := os.CreateTemp("", "valid*.torrent")

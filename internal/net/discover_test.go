@@ -10,8 +10,6 @@ import (
 	"kbit/pkg/types"
 )
 
-// buildPeerResponse constructs a minimal bencoded tracker response
-// containing compact peer data (6 bytes per peer: 4 IP + 2 port).
 func buildPeerResponse(peerBytes []byte) []byte {
 	prefix := fmt.Sprintf("d5:peers%d:", len(peerBytes))
 	body := append([]byte(prefix), peerBytes...)
@@ -66,7 +64,6 @@ func TestExtractPeers_MultiplePeers(t *testing.T) {
 }
 
 func TestExtractPeers_EmptyPeerData(t *testing.T) {
-	// peers length 0 — valid but empty
 	body := []byte("d5:peers0:e")
 	peers := make(types.HashSet[string])
 	extractPeers(body, peers)
