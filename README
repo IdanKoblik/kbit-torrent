@@ -20,6 +20,10 @@ git clone https://github.com/your-username/kbit-torrent.git
 cd kbit-torrent
 
 Build
+
+or if you are using arch linux you can run:
+makepkg -si
+
 -----
 
 go build -o ./bin/kbit-torrent ./cmd/kbit-torrent
