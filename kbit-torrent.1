@@ -1,0 +1,47 @@
+.TH KBIT\-TORRENT 1 "2026-02-25" "kbit-torrent" "User Commands"
+.SH NAME
+kbit\-torrent \- minimal BitTorrent CLI client
+.SH SYNOPSIS
+.B kbit\-torrent
+.I command
+.RI [ argument ]
+.RI [ verbose ]
+.SH DESCRIPTION
+.B kbit\-torrent
+is a minimal BitTorrent client written in Go.
+It provides CLI commands for working with
+.I .torrent
+files, including parsing metadata and discovering peers via trackers.
+.SH COMMANDS
+.TP
+.BI parse " <file>"
+Parse a
+.I .torrent
+file and print its metadata summary, including name, info hash, length,
+tracker URL, and discovered peers.
+.SH OPTIONS
+.TP
+.B verbose
+Pass
+.B verbose
+as the fifth argument to enable verbose logging output.
+.SH EXAMPLES
+Parse a torrent file:
+.PP
+.RS
+.EX
+kbit\-torrent parse example.torrent
+.EE
+.RE
+.SH FILES
+.TP
+.I bin/kbit\-torrent
+Compiled binary produced by
+.BR make (1).
+.SH BUGS
+Report bugs at <https://github.com/IdanKoblik/kbit-torrent/issues>.
+.SH AUTHOR
+Written by Idan Koblik.
+.SH SEE ALSO
+.BR make (1),
+.BR go (1)

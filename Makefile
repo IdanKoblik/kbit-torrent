@@ -41,6 +41,11 @@ cover-integration:
 	@echo ""
 	@echo "HTML report written to $(COVER_HTML)"
 
+.PHONY: install
+install: build
+	install -Dm755 bin/kbit-torrent $(DESTDIR)/usr/bin/kbit-torrent
+	install -Dm644 kbit-torrent.1 $(DESTDIR)/usr/share/man/man1/kbit-torrent.1
+
 .PHONY: clean
 clean:
 	rm -rf bin $(COVER_OUT) $(COVER_HTML)

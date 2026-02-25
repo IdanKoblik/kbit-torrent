@@ -1,0 +1,226 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release — must match a CHANGELOG entry (e.g. 1.0.0)"
+        required: true
+        type: string
+
+env:
+  BINARY_NAME: kbit-torrent
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run unit tests
+        run: |
+          go test -short -race \
+            -coverprofile=coverage.out \
+            -covermode=atomic \
+            -coverpkg=./... \
+            ./...
+
+      - name: Coverage summary
+        run: |
+          go tool cover -func=coverage.out | tee /tmp/cover_summary.txt
+          TOTAL=$(grep '^total:' /tmp/cover_summary.txt | awk '{print $3}')
+          echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Function | Coverage |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|----------|----------|" >> $GITHUB_STEP_SUMMARY
+          grep -v '^total:' /tmp/cover_summary.txt | \
+            awk '{print "| "$1" | "$2" | "$3" |"}' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total: ${TOTAL}**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          retention-days: 7
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build binary
+        run: |
+          go build \
+            -trimpath \
+            -ldflags="-s -w" \
+            -o bin/${{ env.BINARY_NAME }} \
+            ./cmd
+
+      - name: Smoke test — binary runs
+        run: |
+          ./bin/${{ env.BINARY_NAME }} 2>&1 | grep -q "Usage:" || true
+
+  cross-build:
+    name: "Cross Build / linux-${{ matrix.goarch }}"
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'workflow_dispatch'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        goarch: [amd64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build linux/${{ matrix.goarch }}
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          OUT="${{ env.BINARY_NAME }}-${{ github.event.inputs.version }}-linux-${{ matrix.goarch }}"
+          go build \
+            -trimpath \
+            -ldflags="-s -w" \
+            -o "${OUT}" \
+            ./cmd
+          echo "ASSET=${OUT}" >> $GITHUB_ENV
+          ls -lh "${OUT}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}-${{ github.event.inputs.version }}-linux-${{ matrix.goarch }}
+          path: ${{ env.ASSET }}
+          retention-days: 1
+
+  release:
+    name: "Release v${{ github.event.inputs.version }}"
+    runs-on: ubuntu-latest
+    needs: [cross-build]
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract CHANGELOG for v${{ github.event.inputs.version }}
+        id: changelog
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+
+          NOTES=$(awk \
+            -v ver="$VERSION" \
+            '/^Version /{if($2==ver){found=1;next}else if(found){exit}} /^-{5,}/{if(found)next} found{print}' \
+            CHANGELOG \
+            | sed '/^[[:space:]]*$/d')
+
+          if [ -z "$NOTES" ]; then
+            echo "::error::No CHANGELOG entry found for version ${VERSION}"
+            exit 1
+          fi
+
+          printf '%s\n' "$NOTES" > release_notes.txt
+
+          echo "Release notes for v${VERSION}:"
+          cat release_notes.txt
+
+          echo "## Release Notes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### v${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat release_notes.txt >> $GITHUB_STEP_SUMMARY
+
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          pattern: ${{ env.BINARY_NAME }}-${{ github.event.inputs.version }}-*
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Generate checksums
+        working-directory: dist
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          echo "" >> ../release_notes.txt
+          echo "### SHA-256 Checksums" >> ../release_notes.txt
+          echo '```' >> ../release_notes.txt
+          cat SHA256SUMS.txt >> ../release_notes.txt
+          echo '```' >> ../release_notes.txt
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: v${{ github.event.inputs.version }}
+          body_path: release_notes.txt
+          files: |
+            dist/*
+          draft: false
+          prerelease: false
