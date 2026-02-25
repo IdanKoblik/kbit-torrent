@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Version 1.0.0
+-------------
+- Add peer handshake
+- Add file downloading
+
 Version 0.0.0
 -------------
 - Added torrent file parsing command
