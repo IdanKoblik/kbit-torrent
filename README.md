@@ -2,8 +2,6 @@
 
 A minimal BitTorrent CLI client written in Go.
 
-> **IN DEV STAGE**
-
 ## Requirements
 
 - Linux
